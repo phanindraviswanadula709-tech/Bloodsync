@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BloodSync | Requestor Emergency Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        #map { height: 350px; border-radius: 1rem; z-index: 1; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen font-sans transition-colors duration-300">
+
+    <!-- Header Navigation Bar -->
+    <header class="bg-white/90 dark:bg-slate-800/90 backdrop-blur border-b border-slate-200 dark:border-slate-700 px-6 py-4 sticky top-0 z-40 shadow-sm transition-colors duration-300">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="flex items-center space-x-3">
+                <span class="text-3xl">🩸</span>
+                <span class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">BloodSync<span class="text-red-600">AI</span></span>
+            </a>
+
+            <!-- Navigation Tags -->
+            <nav class="flex items-center space-x-4 md:space-x-6 text-sm font-bold">
+                <a href="index.html" class="text-slate-600 dark:text-slate-300 hover:text-red-600 transition">Home</a>
+                <span class="text-blue-600 dark:text-blue-400">Emergency Dashboard</span>
+                <button onclick="logout()" class="bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 hover:bg-red-200 px-4 py-2 rounded-xl transition">Logout</button>
+                
+                <!-- Dark / Light Mode Toggle -->
+                <button onclick="toggleTheme()" class="p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-amber-300 rounded-xl border dark:border-slate-600 transition shadow-sm text-base" title="Toggle Dark/Light Mode">
+                    <span id="themeIcon">🌙</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto mt-8 p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+        <div class="lg:col-span-5 bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-lg border-t-8 border-blue-600 h-fit">
+            <div class="flex justify-between items-center mb-1">
+                <h2 class="text-2xl font-black text-slate-900 dark:text-white">Broadcast Request</h2>
+                <span class="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-bold px-2.5 py-1 rounded-lg" id="userEmailDisplay">--</span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Triggers spatial AI donor matching and live blood bank radar.</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-1">Patient Name</label>
+                    <input id="reqPatient" type="text" placeholder="Full Name" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none focus:border-blue-500 font-bold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-1">Required Group</label>
+                        <select id="reqGroup" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none font-bold text-red-600 dark:text-red-400">
+                            <option value="O+">O+</option><option value="O-">O-</option>
+                            <option value="A+">A+</option><option value="A-">A-</option>
+                            <option value="B+">B+</option><option value="B-">B-</option>
+                            <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-1">Units Needed</label>
+                        <input id="reqUnits" type="number" min="1" max="10" value="1" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none text-center font-bold">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-1">State</label>
+                        <select id="reqState" onchange="populateCities()" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none font-bold">
+                            <option value="" disabled selected>Select State</option>
+                            <option value="Telangana">Telangana</option>
+                            <option value="Andhra Pradesh">Andhra Pradesh</option>
+                            <option value="Karnataka">Karnataka</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-1">City</label>
+                        <select id="reqCity" disabled class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none bg-slate-100 font-bold">
+                            <option value="" disabled selected>Select City</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-1">Hospital Name / Area</label>
+                    <input id="reqHospital" type="text" placeholder="e.g. Yashoda Hospital / Apollo" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none focus:border-blue-500 font-bold">
+                </div>
+
+                <button onclick="submitEmergencyRequest()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 rounded-xl shadow-lg transition text-base flex justify-center items-center gap-2">
+                    ⚡ Execute Spatial AI Match
+                </button>
+                <p id="reqStatus" class="text-xs font-bold text-center text-blue-600 dark:text-blue-400"></p>
+            </div>
+        </div>
+
+        <div class="lg:col-span-7 space-y-6">
+            <div id="initialPlaceholder" class="bg-white dark:bg-slate-800 p-12 rounded-3xl shadow-md text-center border border-slate-200 dark:border-slate-700 text-slate-400">
+                <span class="text-6xl mb-4 block">📡</span>
+                <h3 class="text-xl font-black text-slate-700 dark:text-slate-200 mb-2">Spatial AI Monitoring Ready</h3>
+                <p class="text-xs max-w-md mx-auto">Complete the form on the left to activate KNN donor spatial ranking and fetch live institutional blood banks.</p>
+            </div>
+
+            <div id="resultsWrapper" class="hidden space-y-6">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-lg border border-slate-200 dark:border-slate-700">
+                    <div class="flex justify-between items-center mb-3 px-2">
+                        <span class="font-bold text-slate-900 dark:text-white text-sm">🗺️ Interactive Radar Map</span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400">🔴 Target Location • 🟢 Active AI Donors</span>
+                    </div>
+                    <div id="map"></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-lg border border-red-100 dark:border-slate-700">
+                        <h3 class="font-black text-red-600 dark:text-red-400 mb-4 text-sm">🩸 AI-Ranked Donors</h3>
+                        <div id="donorsList" class="space-y-3 max-h-80 overflow-y-auto pr-1"></div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-lg border border-blue-100 dark:border-slate-700">
+                        <h3 class="font-black text-blue-600 dark:text-blue-400 mb-4 text-sm">🏥 Nearby Hospitals & Blood Banks</h3>
+                        <div id="hospitalsList" class="space-y-3 max-h-80 overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const API = "http://127.0.0.1:8000";
+        let map = null;
+        let markersGroup = null;
+        let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+
+        const locationData = {
+            "Telangana": ["Hyderabad", "Nalgonda", "Warangal", "Karimnagar", "Khammam"],
+            "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Tirupati"],
+            "Karnataka": ["Bengaluru", "Mysuru", "Mangaluru", "Hubli", "Belagavi"]
+        };
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+        }
+        function toggleTheme() {
+            const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(newTheme);
+        }
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').innerText = '☀️';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').innerText = '🌙';
+            }
+            localStorage.setItem('theme', theme);
+        }
+        initTheme();
+
+        if (!currentUser) {
+            window.location.href = "index.html";
+        } else {
+            document.getElementById('userEmailDisplay').innerText = currentUser.email;
+            if (currentUser.name) document.getElementById('reqPatient').value = currentUser.name;
+            if (currentUser.blood_group) document.getElementById('reqGroup').value = currentUser.blood_group;
+            if (currentUser.units_required) document.getElementById('reqUnits').value = currentUser.units_required;
+            if (currentUser.state) {
+                document.getElementById('reqState').value = currentUser.state;
+                populateCities();
+                if (currentUser.city) document.getElementById('reqCity').value = currentUser.city;
+            }
+        }
+
+        function populateCities() {
+            const state = document.getElementById('reqState').value;
+            const citySelect = document.getElementById('reqCity');
+            citySelect.innerHTML = '<option value="" disabled selected>Select City</option>';
+            
+            if (state && locationData[state]) {
+                citySelect.disabled = false;
+                citySelect.classList.remove('bg-slate-100');
+                locationData[state].forEach(city => {
+                    let opt = document.createElement('option');
+                    opt.value = city;
+                    opt.innerHTML = city;
+                    citySelect.appendChild(opt);
+                });
+            }
+        }
+
+        async function submitEmergencyRequest() {
+            const patient = document.getElementById('reqPatient').value;
+            const group = document.getElementById('reqGroup').value;
+            const units = document.getElementById('reqUnits').value;
+            const state = document.getElementById('reqState').value;
+            const city = document.getElementById('reqCity').value;
+            const hospital = document.getElementById('reqHospital').value;
+
+            if (!patient || !state || !city || !hospital) {
+                alert("Please complete all emergency details.");
+                return;
+            }
+
+            document.getElementById('reqStatus').innerText = "Running Spatial AI Engine...";
+
+            try {
+                const res = await fetch(`${API}/api/requests/emergency_match`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        patient_name: patient, required_group: group,
+                        units_required: parseInt(units), hospital_location_name: hospital,
+                        state: state, city: city
+                    })
+                });
+
+                const data = await res.json();
+                document.getElementById('reqStatus').innerText = "";
+                document.getElementById('initialPlaceholder').classList.add('hidden');
+                document.getElementById('resultsWrapper').classList.remove('hidden');
+
+                renderDonors(data.ai_ranked_donors, patient, group, units, hospital, city);
+                renderHospitals(data.nearby_institutions, city);
+                initMap(data.center_lat, data.center_lon, data.ai_ranked_donors, hospital);
+
+            } catch (e) {
+                document.getElementById('reqStatus').innerText = "Error connecting to backend.";
+            }
+        }
+
+        function renderDonors(donors, patient, group, units, hospital, city) {
+            const container = document.getElementById('donorsList');
+            if (!donors || donors.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">No active donors currently registered in ${city}.</p>`;
+                return;
+            }
+
+            container.innerHTML = donors.map((d, index) => {
+                const message = `🚨 *EMERGENCY BLOOD REQUEST* 🚨\n\nPatient: *${patient}*\nGroup Needed: *${group}* (${units} Units)\nHospital: *${hospital}, ${city}*\n\nYou were matched by BloodSync AI. Please respond if available!`;
+
+                return `
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] font-extrabold uppercase text-red-500 bg-red-50 dark:bg-red-900/40 px-2 py-0.5 rounded">
+                                Rank #${index + 1} • ${d.viability_score}% Match
+                            </span>
+                            <h4 class="font-extrabold text-slate-900 dark:text-white text-sm mt-1">${d.name}</h4>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">📍 ${d.distance_km} km away • Recovered ${d.days_since_last_donation}d</p>
+                        </div>
+                        <span class="bg-red-600 text-white font-black text-xs px-2.5 py-1 rounded-lg">${d.blood_group}</span>
+                    </div>
+                    <a href="mailto:${d.email}?subject=Emergency Blood Donation Request&body=${encodeURIComponent(message)}" class="block text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs transition">
+                        📧 Contact Donor via Gmail
+                    </a>
+                </div>`;
+            }).join('');
+        }
+
+        function renderHospitals(hospitals, city) {
+            const container = document.getElementById('hospitalsList');
+            if (!hospitals || hospitals.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">No live institutions found near ${city}.</p>`;
+                return;
+            }
+
+            container.innerHTML = hospitals.map(h => `
+                <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-slate-900 dark:text-white text-xs">${h.name}</h4>
+                        <p class="text-[10px] text-blue-600 dark:text-blue-400 font-bold mt-0.5">🏥 ${h.distance_km} km radius</p>
+                    </div>
+                    <span class="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-bold px-2 py-0.5 rounded">Verified</span>
+                </div>
+            `).join('');
+        }
+
+        function initMap(centerLat, centerLon, donors, hospitalName) {
+            if (!map) {
+                map = L.map('map').setView([centerLat, centerLon], 14);
+                
+                // OpenStreetMap HOT Tiles (Detailed Street Data, Free, No API Key, No Zoom Blocks)
+                L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    maxNativeZoom: 18,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                markersGroup = L.layerGroup().addTo(map);
+            } else {
+                markersGroup.clearLayers();
+                map.setView([centerLat, centerLon], 14);
+            }
+
+            // Target Hospital Red Marker
+            const hospitalIcon = L.divIcon({
+                html: '<div style="background-color: #dc2626; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>',
+                className: ''
+            });
+            L.marker([centerLat, centerLon], { icon: hospitalIcon }).addTo(markersGroup).bindPopup(`<b>${hospitalName}</b><br>Emergency Target Location`).openPopup();
+
+            // Donor Green Markers
+            if (donors && donors.length > 0) {
+                donors.forEach(d => {
+                    const dLat = d.latitude || centerLat + (Math.random() - 0.5) * 0.03;
+                    const dLon = d.longitude || centerLon + (Math.random() - 0.5) * 0.03;
+                    
+                    const donorIcon = L.divIcon({
+                        html: '<div style="background-color: #10b981; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.4);"></div>',
+                        className: ''
+                    });
+                    L.marker([dLat, dLon], { icon: donorIcon }).addTo(markersGroup).bindPopup(`<b>${d.name}</b> (${d.blood_group})<br>Viability: ${d.viability_score}%`);
+                });
+            }
+
+            setTimeout(() => map.invalidateSize(), 300);
+        }
+
+        function logout() {
+            localStorage.removeItem("currentUser");
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>

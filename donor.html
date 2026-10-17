@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BloodSync | Donor Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen font-sans transition-colors duration-300">
+
+    <!-- Header Navigation Bar -->
+    <header class="bg-white/90 dark:bg-slate-800/90 backdrop-blur border-b border-slate-200 dark:border-slate-700 px-6 py-4 sticky top-0 z-40 shadow-sm transition-colors duration-300">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="flex items-center space-x-3">
+                <span class="text-3xl">🩸</span>
+                <span class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">BloodSync<span class="text-red-600">AI</span></span>
+            </a>
+
+            <!-- Global Navigation Tags -->
+            <nav class="flex items-center space-x-3 md:space-x-6 text-sm font-bold">
+                <a href="index.html" class="text-slate-600 dark:text-slate-300 hover:text-red-600 transition">Home</a>
+                <span class="text-red-600 dark:text-red-400">Donor Dashboard</span>
+                <a href="requestor.html" class="text-blue-600 dark:text-blue-400 hover:underline">Emergency Portal 🏥</a>
+                <button onclick="logout()" class="bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 hover:bg-red-200 px-4 py-2 rounded-xl transition">Logout</button>
+                
+                <!-- Dark / Light Mode Toggle -->
+                <button onclick="toggleTheme()" class="p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-amber-300 rounded-xl border dark:border-slate-600 transition shadow-sm text-base" title="Toggle Dark/Light Mode">
+                    <span id="themeIcon">🌙</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto mt-6 p-6">
+
+        <!-- DUAL-CAPABILITY EMERGENCY BANNER -->
+        <div class="bg-gradient-to-r from-red-600 to-rose-700 text-white p-5 rounded-3xl shadow-xl mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-4">
+                <span class="text-4xl">🚨</span>
+                <div>
+                    <h4 class="font-black text-lg">Facing a Personal or Family Emergency?</h4>
+                    <p class="text-xs text-red-100 font-medium">You can broadcast an urgent blood request immediately using your active account credentials.</p>
+                </div>
+            </div>
+            <a href="requestor.html" class="bg-white text-red-600 font-black px-6 py-3 rounded-2xl text-xs hover:bg-red-50 transition shadow-lg whitespace-nowrap">
+                ⚡ Switch to Emergency Command Center →
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+            
+            <!-- Left Profile Column -->
+            <div class="md:col-span-5 bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-lg border-t-8 border-red-600 h-fit space-y-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-900 dark:text-white" id="dashName">--</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold mt-1" id="dashLocation">--</p>
+                        <p class="text-[11px] text-slate-400 font-semibold" id="dashEmail">--</p>
+                    </div>
+                    <span class="bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 font-black text-xl px-4 py-2 rounded-xl" id="dashGroup">--</span>
+                </div>
+
+                <!-- Edit Profile Trigger Button -->
+                <button onclick="openEditModal()" class="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold py-2.5 rounded-xl text-xs transition border border-slate-200 dark:border-slate-600 flex items-center justify-center gap-2">
+                    ✏️ Edit Profile Information
+                </button>
+
+                <div class="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-center">
+                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-1">Recovery Calculation</p>
+                    <p class="text-lg font-extrabold text-slate-900 dark:text-white" id="dashDays">--</p>
+                    <p id="eligibilityMsg" class="text-xs font-bold mt-2"></p>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 text-center">Availability Status</h3>
+                    <button id="toggleBtn" onclick="toggleStatus()" class="w-full font-extrabold py-3.5 rounded-xl shadow-md transition text-sm"></button>
+                </div>
+            </div>
+
+            <!-- Right Emergency Feed Column -->
+            <div class="md:col-span-7 bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-lg border-t-8 border-amber-500 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-4">
+                    <div>
+                        <h3 class="text-xl font-black text-slate-900 dark:text-white">🚨 Matching Emergencies</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Patient requests matching your city and blood group.</p>
+                    </div>
+                    <span class="bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-xs font-bold px-3 py-1 rounded-full">Live Feed</span>
+                </div>
+
+                <div id="requestsFeed" class="space-y-3 max-h-96 overflow-y-auto pr-1">
+                    <p class="text-xs text-slate-400 text-center py-8">Loading matching emergencies...</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- EDIT PROFILE MODAL -->
+    <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white dark:bg-slate-800 text-slate-900 dark:text-white max-w-md w-full p-8 rounded-3xl shadow-2xl relative border-t-8 border-red-600">
+            <button onclick="closeEditModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 dark:hover:text-white font-bold text-xl">✕</button>
+            
+            <h3 class="text-2xl font-black mb-1">Update Profile</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Modify your personal donor details below.</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-1">Full Name</label>
+                    <input id="editName" type="text" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none focus:border-red-500 font-bold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-1">Blood Group</label>
+                        <select id="editGroup" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none font-bold text-red-600 dark:text-red-400">
+                            <option value="O+">O+</option><option value="O-">O-</option>
+                            <option value="A+">A+</option><option value="A-">A-</option>
+                            <option value="B+">B+</option><option value="B-">B-</option>
+                            <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-1">Last Donation Date</label>
+                        <input id="editDate" type="date" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none font-bold text-red-600 dark:text-red-400">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-1">State</label>
+                        <select id="editState" onchange="populateEditCities()" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none font-bold">
+                            <option value="Telangana">Telangana</option>
+                            <option value="Andhra Pradesh">Andhra Pradesh</option>
+                            <option value="Karnataka">Karnataka</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-1">City</label>
+                        <select id="editCity" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none font-bold">
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="saveProfileChanges()" class="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition text-base mt-2">
+                    Save Profile Changes
+                </button>
+                <p id="editStatus" class="text-xs font-bold text-center text-red-500"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = "http://127.0.0.1:8000";
+        let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+
+        const locationData = {
+            "Telangana": ["Hyderabad", "Nalgonda", "Warangal", "Karimnagar", "Khammam"],
+            "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Tirupati"],
+            "Karnataka": ["Bengaluru", "Mysuru", "Mangaluru", "Hubli", "Belagavi"]
+        };
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+        }
+        function toggleTheme() {
+            const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(newTheme);
+        }
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').innerText = '☀️';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').innerText = '🌙';
+            }
+            localStorage.setItem('theme', theme);
+        }
+        initTheme();
+
+        if (!currentUser) {
+            window.location.href = "index.html";
+        } else {
+            setupDashboard();
+            loadEmergencyFeed();
+        }
+
+        function setupDashboard() {
+            document.getElementById('dashName').innerText = currentUser.name;
+            document.getElementById('dashEmail').innerText = currentUser.email;
+            document.getElementById('dashLocation').innerText = `📍 ${currentUser.city}, ${currentUser.state}`;
+            document.getElementById('dashGroup').innerText = currentUser.blood_group;
+            document.getElementById('dashDays').innerText = `${currentUser.days_since_last_donation} Days Since Donation`;
+
+            const btn = document.getElementById('toggleBtn');
+            const msg = document.getElementById('eligibilityMsg');
+
+            if (currentUser.days_since_last_donation < 90) {
+                const daysLeft = 90 - currentUser.days_since_last_donation;
+                msg.innerText = `⚠️ In recovery. Eligible in ${daysLeft} days.`;
+                msg.className = "text-xs font-bold mt-2 text-amber-600 dark:text-amber-400";
+                
+                btn.disabled = true;
+                btn.innerText = "🔒 Locked: Inactive (Recovery)";
+                btn.className = "w-full font-bold py-3.5 rounded-xl shadow text-sm text-slate-400 bg-slate-100 dark:bg-slate-700 cursor-not-allowed";
+            } else {
+                msg.innerText = "✅ Eligible and cleared to donate blood.";
+                msg.className = "text-xs font-bold mt-2 text-emerald-600 dark:text-emerald-400";
+                btn.disabled = false;
+                updateToggleUI(currentUser.is_available);
+            }
+        }
+
+        function updateToggleUI(isActive) {
+            const btn = document.getElementById('toggleBtn');
+            if (isActive) {
+                btn.innerText = "✅ Status: ACTIVE (Click to set Busy)";
+                btn.className = "w-full font-extrabold py-3.5 rounded-xl shadow-md transition text-sm text-white bg-emerald-600 hover:bg-emerald-700";
+            } else {
+                btn.innerText = "⏸️ Status: BUSY (Click to set Active)";
+                btn.className = "w-full font-extrabold py-3.5 rounded-xl shadow-md transition text-sm text-white bg-slate-500 hover:bg-slate-600";
+            }
+        }
+
+        function populateEditCities() {
+            const state = document.getElementById('editState').value;
+            const citySelect = document.getElementById('editCity');
+            citySelect.innerHTML = '';
+            if (state && locationData[state]) {
+                locationData[state].forEach(city => {
+                    let opt = document.createElement('option');
+                    opt.value = city;
+                    opt.innerHTML = city;
+                    citySelect.appendChild(opt);
+                });
+            }
+        }
+
+        function openEditModal() {
+            document.getElementById('editName').value = currentUser.name || '';
+            document.getElementById('editGroup').value = currentUser.blood_group || 'O+';
+            document.getElementById('editDate').value = currentUser.last_donation_date || new Date().toISOString().split('T')[0];
+            
+            if (currentUser.state) {
+                document.getElementById('editState').value = currentUser.state;
+            }
+            populateEditCities();
+            if (currentUser.city) {
+                document.getElementById('editCity').value = currentUser.city;
+            }
+
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        async function saveProfileChanges() {
+            const name = document.getElementById('editName').value.trim();
+            const group = document.getElementById('editGroup').value;
+            const state = document.getElementById('editState').value;
+            const city = document.getElementById('editCity').value;
+            const dateVal = document.getElementById('editDate').value;
+            const status = document.getElementById('editStatus');
+
+            if (!name || !state || !city || !dateVal) {
+                alert("⚠️ Please fill out all fields.");
+                return;
+            }
+
+            status.innerText = "Saving changes...";
+
+            try {
+                const res = await fetch(`${API}/api/donors/update_profile`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        email: currentUser.email,
+                        password: currentUser.password,
+                        name: name,
+                        blood_group: group,
+                        state: state,
+                        city: city,
+                        last_donation_date: dateVal
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    currentUser = data.user;
+                    localStorage.setItem("currentUser", JSON.stringify(currentUser));
+                    
+                    setupDashboard();
+                    loadEmergencyFeed();
+                    closeEditModal();
+                    alert("🎉 Profile updated successfully!");
+                } else {
+                    status.innerText = "Error updating profile.";
+                }
+            } catch (e) {
+                status.innerText = "Server connection error.";
+            }
+        }
+
+        async function toggleStatus() {
+            if (!currentUser) return;
+            const newStatus = !currentUser.is_available;
+            
+            await fetch(`${API}/api/donors/toggle`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    email: currentUser.email, 
+                    password: currentUser.password,
+                    is_available: newStatus
+                })
+            });
+            
+            currentUser.is_available = newStatus;
+            localStorage.setItem("currentUser", JSON.stringify(currentUser));
+            updateToggleUI(newStatus);
+        }
+
+        async function loadEmergencyFeed() {
+            try {
+                const res = await fetch(`${API}/api/donors/requests_feed?city=${encodeURIComponent(currentUser.city)}&blood_group=${encodeURIComponent(currentUser.blood_group)}`);
+                const data = await res.json();
+                const container = document.getElementById('requestsFeed');
+
+                if (!data.requests || data.requests.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">No active emergencies reported in ${currentUser.city} right now.</p>`;
+                    return;
+                }
+
+                container.innerHTML = data.requests.map(r => `
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[10px] font-black uppercase text-red-600 bg-red-100 dark:bg-red-900/40 dark:text-red-300 px-2 py-0.5 rounded">
+                                    Needs ${r.required_group} (${r.units_required} Units)
+                                </span>
+                                <h4 class="font-extrabold text-slate-900 dark:text-white text-sm mt-1">Patient: ${r.patient_name}</h4>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">🏥 ${r.hospital_location_name}, ${r.city}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                document.getElementById('requestsFeed').innerHTML = `<p class="text-xs text-red-500 text-center py-4">Error loading emergency feed.</p>`;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("currentUser");
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>
