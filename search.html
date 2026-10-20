@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Blood Search - BloodSync AI</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f3f4f6; margin: 0; }
+        .container { max-width: 600px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        h2 { color: #dc2626; text-align: center; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #4b5563; margin-bottom: 25px; font-size: 14px; }
+        select, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 8px; border: 1px solid #d1d5db; font-size: 16px; box-sizing: border-box; }
+        select:focus { outline: none; border-color: #dc2626; }
+        button { background-color: #dc2626; color: white; border: none; cursor: pointer; font-weight: bold; transition: background-color 0.2s; }
+        button:hover { background-color: #b91c1c; }
+        .donor-card { border: 1px solid #e5e7eb; padding: 20px; margin-top: 15px; border-radius: 8px; background-color: #f9fafb; }
+        .donor-card h3 { margin: 0 0 10px 0; color: #111827; }
+        .donor-card p { margin: 5px 0; color: #4b5563; }
+        .contact-btn { background-color: #16a34a; margin-top: 15px; }
+        .contact-btn:hover { background-color: #15803d; }
+        #loading { display: none; text-align: center; margin-top: 20px; color: #dc2626; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Emergency Search</h2>
+    <p class="subtitle">Instantly find nearby donors using KNN spatial analysis.</p>
+    
+    <select id="bloodGroup" required>
+        <option value="" disabled selected>Select Required Blood Group</option>
+        <option value="A+">A+</option>
+        <option value="A-">A-</option>
+        <option value="B+">B+</option>
+        <option value="B-">B-</option>
+        <option value="O+">O+</option>
+        <option value="O-">O-</option>
+        <option value="AB+">AB+</option>
+        <option value="AB-">AB-</option>
+    </select>
+
+    <button onclick="findDonors()">Find Nearby Donors</button>
+    
+    <div id="loading">📍 Requesting location and scanning for donors...</div>
+    <div id="resultsContainer"></div>
+</div>
+
+<script>
+    async function findDonors() {
+        const bloodGroup = document.getElementById('bloodGroup').value;
+        const resultsContainer = document.getElementById('resultsContainer');
+        const loading = document.getElementById('loading');
+
+        if (!bloodGroup) {
+            alert("Please select a blood group first.");
+            return;
+        }
+
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser.");
+            return;
+        }
+
+        loading.style.display = "block";
+        resultsContainer.innerHTML = "";
+
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
+
+            try {
+                // Ensure this URL matches your actual Render backend URL!
+                const response = await fetch('https://bloodsync-mmej.onrender.com/api/donors/nearby', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        blood_group: bloodGroup,
+                        latitude: userLat,
+                        longitude: userLon
+                    })
+                });
+
+                const result = await response.json();
+                loading.style.display = "none";
+
+                if (result.status === "success" && result.data.length > 0) {
+                    result.data.forEach(donor => {
+                        const card = document.createElement('div');
+                        card.className = 'donor-card';
+                        card.innerHTML = `
+                            <h3>${donor.name}</h3>
+                            <p style="color: #dc2626; font-weight: bold;">Blood Group: ${donor.blood_group}</p>
+                            <p>📍 ${donor.distance_km} km away | ${donor.city}</p>
+                            <a href="https://wa.me/${donor.phone || ''}" target="_blank" style="text-decoration:none;">
+                                <button class="contact-btn">Contact Donor</button>
+                            </a>
+                        `;
+                        resultsContainer.appendChild(card);
+                    });
+                } else {
+                    resultsContainer.innerHTML = "<p style='text-align:center; color: #4b5563; margin-top:20px;'>No active donors found within 50km for this blood group.</p>";
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                loading.style.display = "none";
+                alert("Failed to connect to the server. Please check your backend.");
+            }
+        }, (error) => {
+            loading.style.display = "none";
+            alert("Please allow location access to find donors near you.");
+        });
+    }
+</script>
+
+</body>
+</html>
