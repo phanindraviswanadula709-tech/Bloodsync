@@ -1,5 +1,6 @@
 import math
 import requests
+import os
 from datetime import datetime, date
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
@@ -10,6 +11,7 @@ from supabase import create_client, Client
 
 app = FastAPI(title="BloodSync AI Engine")
 
+# Enable CORS for frontend-backend communication
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,10 +20,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Supabase Initialization
 SUPABASE_URL = "https://cogwavyapfpkxrfmpvtt.supabase.co"
 SUPABASE_KEY = "sb_publishable_ovEZ75zdteeiDrna1j4JgQ_IYPk8yTk"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# --- Constants ---
 COMPATIBILITY_MATRIX = {
     "A+": ["A+", "A-", "O+", "O-"], "A-": ["A-", "O-"],
     "B+": ["B+", "B-", "O+", "O-"], "B-": ["B-", "O-"],
@@ -63,6 +67,7 @@ DEFAULT_CITY_HOSPITALS = {
     ]
 }
 
+# --- Pydantic Models ---
 class UserRegister(BaseModel):
     name: str; email: str; password: str; role: str
     blood_group: str; state: str; city: str
@@ -84,6 +89,12 @@ class EmergencyRequest(BaseModel):
     patient_name: str; required_group: str; units_required: int
     hospital_location_name: str; state: str; city: str
 
+class LocationQuery(BaseModel):
+    blood_group: str
+    latitude: float
+    longitude: float
+
+# --- Helper Functions ---
 def calculate_days(last_date_str):
     if not last_date_str: return 90
     try:
@@ -99,25 +110,15 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     return R * (2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)))
 
 def geocode_location(hospital_name: str, city: str, state: str):
-    """Sanitized & Multi-Stage Geocoder with Locality Fallback"""
-    # Clean special symbols like / or -
     cleaned = hospital_name.replace('/', ', ').replace('-', ' ').replace(';', ', ').strip()
     parts = [p.strip() for p in cleaned.split(',') if p.strip()]
     
     search_queries = []
-    
-    # Strategy 1: Full sanitized string (e.g. "sai teja hospital, saroornagar, Hyderabad, Telangana, India")
     search_queries.append(f"{cleaned}, {city}, {state}, India")
-    
-    # Strategy 2: First part with city (e.g. "sai teja hospital, Hyderabad, Telangana, India")
     if parts:
         search_queries.append(f"{parts[0]}, {city}, {state}, India")
-        
-    # Strategy 3: Locality fallback (e.g. "saroornagar, Hyderabad, Telangana, India")
     if len(parts) > 1:
         search_queries.append(f"{parts[1]}, {city}, {state}, India")
-        
-    # Strategy 4: General city fallback
     search_queries.append(f"{city}, {state}, India")
     
     headers = {"User-Agent": "BloodSyncAI/1.0"}
@@ -169,6 +170,8 @@ def fetch_osm_hospitals(city, lat, lon, radius_meters=20000):
         {"name": f"Red Cross Society Blood Bank, {city}", "distance_km": 2.8},
         {"name": f"City Multi-Specialty Hospital, {city}", "distance_km": 3.4}
     ])
+
+# --- Endpoints ---
 
 @app.get("/api/stats")
 def get_stats():
@@ -254,9 +257,7 @@ def emergency_match(req: EmergencyRequest):
     req_data = req.dict()
     supabase.table("blood_requests").insert(req_data).execute()
 
-    # Dynamic Geocoding with Locality Fallback
     target_lat, target_lon = geocode_location(req.hospital_location_name, req.city, req.state)
-
     compatible = COMPATIBILITY_MATRIX.get(req.required_group, [req.required_group])
     res = supabase.table("users").select("*").eq("role", "donor").in_("blood_group", compatible).eq("city", req.city).eq("is_available", True).execute()
     
@@ -290,3 +291,36 @@ def emergency_match(req: EmergencyRequest):
         "ai_ranked_donors": ranked, 
         "nearby_institutions": live_hospitals
     }
+
+# --- NEW EMERGENCY SCANNER ENDPOINT (Donors + Hospitals side-by-side) ---
+@app.post("/api/donors/nearby")
+def get_nearby_donors(query: LocationQuery):
+    try:
+        # 1. Fetch human donors from Supabase
+        response = supabase.table('users').select('*').eq('blood_group', query.blood_group).eq('role', 'donor').execute()
+        donors = response.data
+
+        nearby_donors = []
+        for donor in donors:
+            if donor.get('latitude') and donor.get('longitude'):
+                dist = haversine_distance(query.latitude, query.longitude, donor['latitude'], donor['longitude'])
+                if dist <= 50:
+                    donor_info = donor.copy()
+                    donor_info['distance_km'] = round(dist, 2)
+                    donor_info.pop('password', None) 
+                    nearby_donors.append(donor_info)
+        
+        nearby_donors.sort(key=lambda x: x['distance_km'])
+
+        # 2. Fetch live nearby hospitals using OpenStreetMap function (20km radius)
+        live_hospitals = fetch_osm_hospitals("Local", query.latitude, query.longitude, radius_meters=20000)
+        
+        # 3. Return BOTH lists to populate the side-by-side frontend
+        return {
+            "status": "success", 
+            "data": nearby_donors,
+            "hospitals": live_hospitals
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
