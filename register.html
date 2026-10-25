@@ -56,6 +56,11 @@
                     <label class="block text-xs font-bold uppercase mb-1">Gmail / Email Address *</label>
                     <input id="regEmail" type="email" placeholder="john@gmail.com" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none focus:border-red-500 font-bold">
                 </div>
+                
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-1">Mobile Number *</label>
+                    <input id="regPhone" type="tel" placeholder="9876543210" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none focus:border-red-500 font-bold">
+                </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -210,6 +215,7 @@
             const role = document.getElementById('regRole').value;
             const name = document.getElementById('regName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
             const password = document.getElementById('regPassword').value.trim();
             const group = document.getElementById('regGroup').value;
             const state = document.getElementById('regState').value;
@@ -220,44 +226,37 @@
 
             if (!name) {
                 alert("⚠️ Alert: Please enter your Full Name.");
-                status.innerText = "Please enter your name.";
-                status.className = "text-sm font-bold text-center text-red-600 mt-4";
+                return;
+            }
+            
+            if (!phone || phone.length < 10) {
+                alert("⚠️ Alert: Please enter a valid 10-digit Mobile Number.");
                 return;
             }
 
             const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!email || !emailPattern.test(email)) {
                 alert("⚠️ Alert: Please enter a valid Gmail / Email address (e.g. user@gmail.com).");
-                status.innerText = "Invalid Gmail address.";
-                status.className = "text-sm font-bold text-center text-red-600 mt-4";
                 return;
             }
 
             if (!password || password.length < 6) {
                 alert("⚠️ Alert: Password must be at least 6 characters long.");
-                status.innerText = "Password must be at least 6 characters.";
-                status.className = "text-sm font-bold text-center text-red-600 mt-4";
                 return;
             }
 
             if (!state || !city) {
                 alert("⚠️ Alert: Please select both State and City.");
-                status.innerText = "Please select your location.";
-                status.className = "text-sm font-bold text-center text-red-600 mt-4";
                 return;
             }
 
             if (role === 'donor' && !dateVal) {
                 alert("⚠️ Alert: Please enter your Date of Last Blood Donation.");
-                status.innerText = "Please specify last donation date.";
-                status.className = "text-sm font-bold text-center text-red-600 mt-4";
                 return;
             }
 
             if (role === 'requestor' && (!unitsVal || parseInt(unitsVal) < 1)) {
                 alert("⚠️ Alert: Please enter a valid number of blood units required (at least 1).");
-                status.innerText = "Invalid blood units quantity.";
-                status.className = "text-sm font-bold text-center text-red-600 mt-4";
                 return;
             }
 
@@ -268,7 +267,7 @@
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        role: role, name: name, email: email, password: password,
+                        role: role, name: name, email: email, password: password, phone: phone,
                         blood_group: group, state: state, city: city,
                         last_donation_date: role === 'donor' ? dateVal : "",
                         units_required: role === 'requestor' ? parseInt(unitsVal) : 1
@@ -279,7 +278,7 @@
                     const data = await res.json();
                     localStorage.setItem("currentUser", JSON.stringify(data.user));
                     alert("🎉 Success: Account created! Directing directly to your dashboard...");
-                    window.location.href = data.redirect; // DIRECT REDIRECT TO DASHBOARD!
+                    window.location.href = data.redirect;
                 } else {
                     const errData = await res.json();
                     alert(`❌ Registration Error: ${errData.detail || "Unable to register."}`);

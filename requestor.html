@@ -243,7 +243,7 @@
             }
 
             container.innerHTML = donors.map((d, index) => {
-                const message = `🚨 *EMERGENCY BLOOD REQUEST* 🚨\n\nPatient: *${patient}*\nGroup Needed: *${group}* (${units} Units)\nHospital: *${hospital}, ${city}*\n\nYou were matched by BloodSync AI. Please respond if available!`;
+                const message = `🚨 *EMERGENCY BLOOD REQUEST* 🚨\n\nPatient: *${patient}*\nGroup Needed: *${group}* (${units} Units)\nHospital: *${hospital}, ${city}*\n\nYou were matched by BloodSync AI. Are you available?`;
 
                 return `
                 <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700 space-y-2">
@@ -257,9 +257,14 @@
                         </div>
                         <span class="bg-red-600 text-white font-black text-xs px-2.5 py-1 rounded-lg">${d.blood_group}</span>
                     </div>
-                    <a href="mailto:${d.email}?subject=Emergency Blood Donation Request&body=${encodeURIComponent(message)}" class="block text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs transition">
-                        📧 Contact Donor via Gmail
-                    </a>
+                    <div class="flex gap-2 mt-2">
+                        <a href="https://wa.me/${d.phone}?text=${encodeURIComponent(message)}" target="_blank" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-xl text-xs transition">
+                            💬 WhatsApp
+                        </a>
+                        <a href="tel:${d.phone}" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl text-xs transition">
+                            📞 Call Now
+                        </a>
+                    </div>
                 </div>`;
             }).join('');
         }
@@ -286,7 +291,6 @@
             if (!map) {
                 map = L.map('map').setView([centerLat, centerLon], 14);
                 
-                // OpenStreetMap HOT Tiles (Detailed Street Data, Free, No API Key, No Zoom Blocks)
                 L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     maxNativeZoom: 18,
@@ -299,14 +303,12 @@
                 map.setView([centerLat, centerLon], 14);
             }
 
-            // Target Hospital Red Marker
             const hospitalIcon = L.divIcon({
                 html: '<div style="background-color: #dc2626; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>',
                 className: ''
             });
             L.marker([centerLat, centerLon], { icon: hospitalIcon }).addTo(markersGroup).bindPopup(`<b>${hospitalName}</b><br>Emergency Target Location`).openPopup();
 
-            // Donor Green Markers
             if (donors && donors.length > 0) {
                 donors.forEach(d => {
                     const dLat = d.latitude || centerLat + (Math.random() - 0.5) * 0.03;

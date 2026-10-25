@@ -71,6 +71,7 @@ DEFAULT_CITY_HOSPITALS = {
 class UserRegister(BaseModel):
     name: str; email: str; password: str; role: str
     blood_group: str; state: str; city: str
+    phone: str
     last_donation_date: str = None
     units_required: int = 1
 
@@ -82,7 +83,7 @@ class ToggleStatus(BaseModel):
 
 class ProfileUpdate(BaseModel):
     email: str; password: str
-    name: str; blood_group: str; state: str; city: str
+    name: str; phone: str; blood_group: str; state: str; city: str
     last_donation_date: str
 
 class EmergencyRequest(BaseModel):
@@ -235,6 +236,7 @@ def update_donor_profile(payload: ProfileUpdate):
     city_coords = CITY_COORDINATES.get(payload.city, (17.3850, 78.4867))
     update_data = {
         "name": payload.name,
+        "phone": payload.phone,
         "blood_group": payload.blood_group,
         "state": payload.state,
         "city": payload.city,
@@ -292,11 +294,9 @@ def emergency_match(req: EmergencyRequest):
         "nearby_institutions": live_hospitals
     }
 
-# --- NEW EMERGENCY SCANNER ENDPOINT (Donors + Hospitals side-by-side) ---
 @app.post("/api/donors/nearby")
 def get_nearby_donors(query: LocationQuery):
     try:
-        # 1. Fetch human donors from Supabase
         response = supabase.table('users').select('*').eq('blood_group', query.blood_group).eq('role', 'donor').execute()
         donors = response.data
 
@@ -311,11 +311,8 @@ def get_nearby_donors(query: LocationQuery):
                     nearby_donors.append(donor_info)
         
         nearby_donors.sort(key=lambda x: x['distance_km'])
-
-        # 2. Fetch live nearby hospitals using OpenStreetMap function (20km radius)
         live_hospitals = fetch_osm_hospitals("Local", query.latitude, query.longitude, radius_meters=20000)
         
-        # 3. Return BOTH lists to populate the side-by-side frontend
         return {
             "status": "success", 
             "data": nearby_donors,
