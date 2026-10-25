@@ -270,7 +270,7 @@
                     body: JSON.stringify({
                         role: role, name: name, email: email, password: password,
                         blood_group: group, state: state, city: city,
-                        last_donation_date: role === 'donor' ? dateVal : null,
+                        last_donation_date: role === 'donor' ? dateVal : "",
                         units_required: role === 'requestor' ? parseInt(unitsVal) : 1
                     })
                 });
