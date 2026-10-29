@@ -34,10 +34,10 @@
             <!-- Navigation Tags -->
             <nav class="flex items-center space-x-2 md:space-x-6 text-sm font-bold">
                 <a href="index.html" class="text-red-600 dark:text-red-400">Home</a>
-                <!-- Updated: Bypasses login, goes straight to search.html -->
                 <a href="search.html" class="text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition">Emergency Search</a>
                 <button onclick="openAuthModal('donor')" class="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition">Donor Portal</button>
-                <a href="register.html" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl shadow transition">Register as Donor</a>
+                <button onclick="openAuthModal('requestor')" class="text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition">Requestor Portal</button>
+                <a href="register.html?role=donor" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl shadow transition">Register</a>
                 
                 <!-- Dark / Light Mode Toggle Button -->
                 <button onclick="toggleTheme()" class="p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-amber-300 rounded-xl border dark:border-slate-600 transition shadow-sm text-base" title="Toggle Dark/Light Mode">
@@ -47,7 +47,7 @@
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto w-full px-8 my-auto py-8">
+    <main class="max-w-7xl mx-auto w-full px-6 my-auto py-8">
         <div class="text-center max-w-3xl mx-auto mb-12 space-y-4">
             <span class="bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-300 border border-red-500/30 font-bold text-xs uppercase px-4 py-1.5 rounded-full tracking-wider">
                 ⚡ Intelligent Emergency Network
@@ -60,56 +60,67 @@
             </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <!-- Changed grid to 3 columns (grid-cols-3) and increased max-width -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             
-            <!-- EMERGENCY SEEKER CARD (No Login Required) -->
-            <div onclick="window.location.href='search.html'" class="hover-card bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-8 rounded-3xl shadow-xl cursor-pointer border-t-8 border-red-600 dark:border-red-500">
+            <!-- 1. EMERGENCY SEEKER CARD (No Login Required) -->
+            <div onclick="window.location.href='search.html'" class="hover-card bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-8 rounded-3xl shadow-xl cursor-pointer border-t-8 border-red-600 dark:border-red-500 flex flex-col">
                 <div class="h-14 w-14 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded-2xl flex items-center justify-center text-3xl mb-4">🚨</div>
                 <h3 class="text-2xl font-black mb-2">Need Blood Urgently</h3>
-                <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Instantly scan for nearby available donors using your live GPS location. No account required.</p>
-                <button class="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold py-3 rounded-xl transition shadow-lg">
+                <p class="text-slate-500 dark:text-slate-400 text-sm mb-6 flex-grow">Instantly scan for nearby available donors using your live GPS location. No account required.</p>
+                <button class="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold py-3 rounded-xl transition shadow-lg mt-auto">
                     Find Nearby Donors →
                 </button>
             </div>
 
-            <!-- DONOR PORTAL CARD (Login Required) -->
-            <div onclick="openAuthModal('donor')" class="hover-card bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-8 rounded-3xl shadow-xl cursor-pointer border-t-8 border-blue-600 dark:border-blue-500">
+            <!-- 2. DONOR PORTAL CARD (Login Required) -->
+            <div onclick="openAuthModal('donor')" class="hover-card bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-8 rounded-3xl shadow-xl cursor-pointer border-t-8 border-blue-600 dark:border-blue-500 flex flex-col">
                 <div class="h-14 w-14 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center text-3xl mb-4">🩸</div>
                 <h3 class="text-2xl font-black mb-2">Donor Portal</h3>
-                <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Log in to update your live location, manage availability status, and save lives.</p>
-                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 rounded-xl transition shadow-lg">
+                <p class="text-slate-500 dark:text-slate-400 text-sm mb-6 flex-grow">Log in to update your live location, manage availability status, and save lives.</p>
+                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 rounded-xl transition shadow-lg mt-auto">
                     Access Donor Portal →
+                </button>
+            </div>
+
+            <!-- 3. REQUESTOR PORTAL CARD (Login Required) -->
+            <div onclick="openAuthModal('requestor')" class="hover-card bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-8 rounded-3xl shadow-xl cursor-pointer border-t-8 border-emerald-500 dark:border-emerald-500 flex flex-col">
+                <div class="h-14 w-14 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center text-3xl mb-4">🏥</div>
+                <h3 class="text-2xl font-black mb-2">Requestor Portal</h3>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mb-6 flex-grow">Hospitals & Attendants: Log in to broadcast emergencies and trigger spatial AI mapping.</p>
+                <button class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-3 rounded-xl transition shadow-lg mt-auto">
+                    Access Requestor Portal →
                 </button>
             </div>
 
         </div>
     </main>
 
-    <!-- AUTHENTICATION MODAL (Now dedicated primarily to Donors) -->
-    <div id="authModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white dark:bg-slate-800 text-slate-900 dark:text-white max-w-md w-full p-8 rounded-3xl shadow-2xl relative border-t-8 border-blue-600" id="modalBorder">
+    <!-- AUTHENTICATION MODAL (Smart Modal: Adapts to Donor or Requestor) -->
+    <div id="authModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 transition-opacity">
+        <div class="bg-white dark:bg-slate-800 text-slate-900 dark:text-white max-w-md w-full p-8 rounded-3xl shadow-2xl relative border-t-8 transition-colors duration-300" id="modalBorder">
             <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 dark:hover:text-white font-bold text-xl">✕</button>
             
-            <h3 class="text-2xl font-black mb-1" id="modalTitle">Donor Login</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Enter your registered Gmail address and Password.</p>
+            <h3 class="text-2xl font-black mb-1" id="modalTitle">Account Login</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-6" id="modalDesc">Enter your registered Gmail address and Password.</p>
 
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold uppercase mb-1">Gmail / Email Address</label>
-                    <input id="loginEmail" type="email" placeholder="example@gmail.com" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none focus:border-blue-500 font-bold">
+                    <input id="loginEmail" type="email" placeholder="example@gmail.com" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 rounded-xl outline-none focus:border-slate-400 font-bold">
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold uppercase mb-1">Account Password</label>
                     <div class="relative">
-                        <input id="loginPassword" type="password" placeholder="••••••••" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 pr-12 rounded-xl outline-none focus:border-blue-500 font-bold">
+                        <input id="loginPassword" type="password" placeholder="••••••••" class="w-full border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 p-3 pr-12 rounded-xl outline-none focus:border-slate-400 font-bold">
                         <button type="button" onclick="togglePasswordVisibility('loginPassword', 'loginEyeIcon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 p-1 font-bold text-sm select-none">
                             <span id="loginEyeIcon">👁️</span>
                         </button>
                     </div>
                 </div>
 
-                <button onclick="executeLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition text-base">
+                <button onclick="executeLogin()" id="loginBtn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition text-base">
                     Log In to Dashboard →
                 </button>
                 <p id="loginError" class="text-xs font-bold text-center text-red-500"></p>
@@ -117,15 +128,15 @@
 
             <div class="mt-6 text-center border-t border-slate-200 dark:border-slate-700 pt-4">
                 <p class="text-xs text-slate-500 dark:text-slate-400">
-                    New donor? 
-                    <a href="register.html?role=donor" id="regLink" class="text-blue-600 dark:text-blue-400 font-extrabold hover:underline">Create a new account</a>
+                    Don't have an account? 
+                    <a href="register.html" id="regLink" class="font-extrabold hover:underline">Create a new account</a>
                 </p>
             </div>
         </div>
     </div>
 
-    <footer class="max-w-7xl mx-auto w-full px-8 py-4 text-center text-xs text-slate-400 border-t border-slate-200 dark:border-slate-800">
-        BloodSync Enterprise System
+    <footer class="max-w-7xl mx-auto w-full px-8 py-4 text-center text-xs text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-auto">
+        BloodSync Enterprise System | Engineered for Emergency Response
     </footer>
 
     <script>
@@ -165,8 +176,35 @@
             }
         }
 
+        // Smart Auth Modal Logic
         function openAuthModal(role) {
             const modal = document.getElementById('authModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBorder = document.getElementById('modalBorder');
+            const loginBtn = document.getElementById('loginBtn');
+            const regLink = document.getElementById('regLink');
+            
+            // Clear previous errors
+            document.getElementById('loginError').innerText = "";
+            document.getElementById('loginEmail').value = "";
+            document.getElementById('loginPassword').value = "";
+
+            if (role === 'donor') {
+                modalTitle.innerText = "Donor Login 🩸";
+                modalBorder.className = "bg-white dark:bg-slate-800 text-slate-900 dark:text-white max-w-md w-full p-8 rounded-3xl shadow-2xl relative border-t-8 border-blue-600 transition-colors duration-300";
+                loginBtn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition text-base";
+                regLink.href = "register.html?role=donor";
+                regLink.className = "text-blue-600 dark:text-blue-400 font-extrabold hover:underline";
+                regLink.innerText = "Create Donor Account";
+            } else if (role === 'requestor') {
+                modalTitle.innerText = "Requestor Login 🏥";
+                modalBorder.className = "bg-white dark:bg-slate-800 text-slate-900 dark:text-white max-w-md w-full p-8 rounded-3xl shadow-2xl relative border-t-8 border-emerald-500 transition-colors duration-300";
+                loginBtn.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition text-base";
+                regLink.href = "register.html?role=requestor";
+                regLink.className = "text-emerald-600 dark:text-emerald-400 font-extrabold hover:underline";
+                regLink.innerText = "Create Requestor Account";
+            }
+
             modal.classList.remove('hidden');
         }
 
@@ -178,27 +216,28 @@
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
             const err = document.getElementById('loginError');
+            const btn = document.getElementById('loginBtn');
 
             if (!email || !password) {
-                alert("⚠️ Alert: Please fill out both Email and Password fields before submitting.");
-                err.innerText = "All fields are required.";
+                err.innerText = "⚠️ All fields are required.";
                 return;
             }
 
             const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailPattern.test(email)) {
-                alert("⚠️ Invalid Email Format: Please enter a valid Gmail address (e.g., user@gmail.com).");
-                err.innerText = "Please provide a valid Gmail address.";
+                err.innerText = "⚠️ Please provide a valid Gmail address.";
                 return;
             }
 
             if (password.length < 6) {
-                alert("⚠️ Invalid Password: Password must be at least 6 characters long.");
-                err.innerText = "Password must be at least 6 characters.";
+                err.innerText = "⚠️ Password must be at least 6 characters.";
                 return;
             }
 
-            err.innerText = "Authenticating...";
+            const originalBtnText = btn.innerText;
+            btn.innerText = "Authenticating... ⏳";
+            err.innerText = "";
+            btn.disabled = true;
 
             try {
                 const res = await fetch(`${API}/api/auth/login`, {
@@ -208,18 +247,21 @@
                 });
 
                 if (!res.ok) {
-                    alert("❌ Login Failed: Invalid Gmail address or Password.");
-                    err.innerText = "Invalid Gmail address or Password.";
+                    err.innerText = "❌ Login Failed: Invalid Gmail address or Password.";
+                    btn.innerText = originalBtnText;
+                    btn.disabled = false;
                     return;
                 }
 
                 const data = await res.json();
                 localStorage.setItem("currentUser", JSON.stringify(data.user));
+                // Backend knows the role and provides the exact redirect URL
                 window.location.href = data.redirect;
 
             } catch (e) {
-                alert("⚠️ Server Error: Make sure your FastAPI backend (main.py) is running.");
-                err.innerText = "Server Error. Ensure FastAPI server is running.";
+                err.innerText = "⚠️ Server Error. Ensure FastAPI server is running.";
+                btn.innerText = originalBtnText;
+                btn.disabled = false;
             }
         }
     </script>
